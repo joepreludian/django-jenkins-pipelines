@@ -4,6 +4,7 @@ MAINTAINER Jonhnatha Trigueiro <joepreludian@gmail.com>
 RUN apt-get update && apt-get install nginx supervisor python-pip -y && \
     pip install --upgrade pip && pip2 install --upgrade supervisor supervisor-stdout && apt-get autoclean
 
+RUN mkdir /app
 ADD . /app
 
 ADD nginx.conf /etc/nginx/nginx.conf
