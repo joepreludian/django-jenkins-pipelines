@@ -6,3 +6,4 @@ RUN apt-get update && apt-get install nginx supervisor python-pip -y && \
 
 ADD entrypoint.sh /entrypoint.sh
 
+CMD /entrypoint.sh
