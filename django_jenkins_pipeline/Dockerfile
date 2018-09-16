@@ -2,7 +2,7 @@ FROM python:%python_version%
 MAINTAINER Jonhnatha Trigueiro <joepreludian@gmail.com>
 
 RUN apt-get update && apt-get install nginx supervisor python-pip -y && \
-    pip install --upgrade pip gunicorn && pip2 install --upgrade supervisor supervisor-stdout && apt-get autoclean
+    pip install --upgrade pip gunicorn pipenv && pip2 install --upgrade supervisor supervisor-stdout && apt-get autoclean
 
 RUN mkdir /app
 ADD . /app
@@ -12,6 +12,8 @@ ADD supervisord.conf /etc/supervisord.conf
 ADD entrypoint.sh /entrypoint.sh
 
 WORKDIR /app
+
+RUN pipenv install --system --deploy
 
 EXPOSE 80
 
