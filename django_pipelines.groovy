@@ -1,7 +1,17 @@
 #!groovy
 
-// https://plugins.jenkins.io/pipeline-utility-steps
-// https://plugins.jenkins.io/ws-cleanup
+/* 
+    Django Jenkins Pipelines
+    ------------------------
+    A simple, decoupled Jenkins pipeline for build Django applications
+
+    Jenkins plugins used
+    --------------------
+    - https://plugins.jenkins.io/pipeline-utility-steps
+    - https://plugins.jenkins.io/ws-cleanup
+
+*/
+
 
 project_name = 'my_test_project'
 project_python_version = '3.6'
@@ -18,10 +28,8 @@ project_zip = null
 def djangoBuildProject(args) {
     
     /*
-        Django Build Pipeline - A Simple Jenkins pipeline to build Django Projects
-        ---------------------
         arguments: 
-            * docker_extra_options - string - Put extra options inside any projects
+            * args.docker_extra_options - string - Put extra options inside any projects
             
             * python_django_wsgi - string - required - Name of django wsgi container
             * python_django_main_module - required - Name of django main module
@@ -48,7 +56,7 @@ def djangoBuildProject(args) {
    
         // Building the Django artifact
         docker.image("python:${project_python_version}").inside(args.docker_extra_options) {
-            stage('Install dependencies') {
+            stage('Py - Install dependencies') {
                 figlet "Project version ${project_version}"
                 figlet 'Django - Install dependencies'
 
@@ -56,12 +64,12 @@ def djangoBuildProject(args) {
                 sh 'pip install --upgrade pipenv && pipenv install --system --deploy'
             }
 
-            stage('Run migrations') {
+            stage('Py - DJ - Run migrations') {
                 figlet 'Django - Run migrations'
                 sh 'python manage.py migrate'
             }
 
-            stage('Collect Static') {
+            stage('Py - DJ - Collect Static') {
                 figlet 'Django - Collect Static'
 
                 sh 'python manage.py collectstatic --noinput'
@@ -70,17 +78,34 @@ def djangoBuildProject(args) {
         }
     
         // Build Javascript stuff, if needed
-        if (args.node_install_static_npm_modules) {
-            docker.image("node").inside(args.docker_extra_options) {
+        docker.image("node").inside(args.docker_extra_options) {
+            stage('JS - Install and build') {
                 unstash 'django_static'
 
-                sh 'npm install -g yarn'
-                sh 'cd static; yarn'
+                if (args.node_install_static_npm_modules) {
+                    echo "Node - Installing dependencies inside django static folder"
+                    sh 'npm install -g yarn'
+                    sh 'cd static; yarn'
+
+                } else {
+                    echo "Node - Skipping installing dependencies inside django static folder"
+                }
 
                 stash includes: 'static/', name: 'django_static_final'
             }
         }
 
+        stage('DJ - Generate Artifact') {
+            cleanWs()
+            checkout scm
+
+            unstash 'django_static_final'
+
+            figlet 'Django - Generate artifact'
+            zip zipFile: 'project.zip', dir: '.'
+
+            stash includes: 'project.zip', name: 'django_project'
+        }
     }
 }
 
@@ -111,40 +136,6 @@ pipeline {
             agent any
             steps {
                 projectPipelineStart docker_extra_options: docker_args, wsgi: 'test_project', main_module: 'Main Module'
-            }
-        }
-
-        stage('Build project - Install JS Libraries') {
-            agent {
-                docker { 
-                    image 'node'
-                    args docker_args
-                }
-            }
-            steps {
-                figlet 'JS - Install Libraries'
-                unstash 'django_static'
-
-                sh 'npm install -g yarn'
-                sh 'cd static; yarn'
-
-                stash includes: 'static/', name: 'django_static_final'
-            }
-        }
-
-        stage('Generate Artifact') {
-            agent any
-            steps {
-                cleanWs()
-                checkout scm
-
-                unstash 'django_static_final'
-
-                figlet 'Django - Generate artifact'
-                zip zipFile: 'project.zip', dir: '.'
-
-                stash includes: 'project.zip', name: 'django_project'
-                
             }
         }
 
