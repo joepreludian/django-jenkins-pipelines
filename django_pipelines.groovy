@@ -3,6 +3,7 @@
 // https://plugins.jenkins.io/pipeline-utility-steps
 // https://plugins.jenkins.io/ws-cleanup
 
+/*
 project_name = 'my_test_project'
 project_python_version = '3.6'
 wsgi_container = 'test_project'
@@ -11,6 +12,7 @@ docker_image_cleanup_old_builds = true
 docker_listen_port = 8001
 
 docker_args = '-v prl-vol-jenkins:/var/jenkins_home -u root:root'
+*/
 
 project_version = null
 project_zip = null
@@ -44,8 +46,18 @@ def djangoBuildProject(args) {
         // Composition of the project Artifact
         project_zip = "${project_name}-${project_version}-b${env.BUILD_NUMBER}.zip"
         
+        figlet "Django Pipelines"
+
         echo "Project ZIP name: ${project_zip}"
-   
+
+        figlet "Django Pipelines - args"
+        
+        echo "- docker_extra_options: ${args.docker_extra_options}"
+        echo "- python_django_wsgi: ${args.python_django_wsgi}"
+        echo "- python_django_main_module: ${args.python_django_main_module}"
+        echo "- python_version: ${args.python_version}"
+
+
         // Building the Django artifact
         docker.image("python:${project_python_version}").inside(args.docker_extra_options) {
             stage('Install dependencies') {
