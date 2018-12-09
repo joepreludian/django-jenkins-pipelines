@@ -35,7 +35,7 @@ def buildProject(args) {
     // @todo Add container linking for mysql and postgresql 
     // @todo Inject environment variables 
     
-    environment_variables = args.project_environment_variables ? args.project_environment_variables : []
+    environment_variables = args.get('project_environment_variables', [])
 
     withEnv(environment_variables) {
     node {
