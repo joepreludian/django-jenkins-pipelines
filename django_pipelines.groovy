@@ -56,6 +56,7 @@ def djangoBuildProject(args) {
         echo "- python_django_wsgi: ${args.python_django_wsgi}"
         echo "- python_django_main_module: ${args.python_django_main_module}"
         echo "- python_version: ${args.python_version}"
+        echo "-- Django Project version: ${project_version}"
 
 
         // Building the Django artifact
