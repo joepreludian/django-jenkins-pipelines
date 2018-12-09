@@ -80,19 +80,21 @@ def djangoBuildProject(args) {
                 stash includes: 'static/', name: 'django_static'
             }
         }
-    
-        stage('Build Node stuff') {
-            // Build Javascript stuff, if needed
-            if (args.node_install_static_npm_modules) {
-                docker.image("node").inside(args.docker_extra_options) {
-                    unstash 'django_static'
+        
+        if (args.node_build_npm) {
+          stage('Build Node stuff') {
+              // Build Javascript stuff, if needed
+              if (args.node_build_npm) {
+                  docker.image("node").inside(args.docker_extra_options) {
+                      unstash 'django_static'
 
-                    sh 'npm install -g yarn'
-                    sh 'cd static; yarn'
+                      sh 'npm install -g yarn'
+                      sh 'cd static; yarn'
 
-                    stash includes: 'static/', name: 'django_static_final'
-                }
-            }
+                      stash includes: 'static/', name: 'django_static_final'
+                  }
+              }
+          }
         }
 
     }
