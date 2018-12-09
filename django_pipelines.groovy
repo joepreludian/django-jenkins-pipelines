@@ -17,7 +17,7 @@ docker_args = '-v prl-vol-jenkins:/var/jenkins_home -u root:root'
 project_version = null
 project_zip = null
 
-def djangoBuildProject(args) {
+def buildProject(args) {
     
     /*
         Django Build Pipeline - A Simple Jenkins pipeline to build Django Projects
