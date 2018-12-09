@@ -58,6 +58,9 @@ def buildProject(args) {
         echo "- python_version: ${args.python_version}"
         echo "-- Django Project version: ${project_version}"
 
+        if (args.project_environment) {
+          env = args.project_environment_variables
+        }
 
         // Building the Django artifact
         docker.image("python:${args.python_version}").inside(args.docker_extra_options) {
