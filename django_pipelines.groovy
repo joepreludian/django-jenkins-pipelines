@@ -44,7 +44,7 @@ def buildProject(args) {
         project_version = project_version.trim()
 
         // Composition of the project Artifact
-        project_zip = "${project_name}-${project_version}-b${env.BUILD_NUMBER}.zip"
+        project_zip = "${args.project_name}-${project_version}-b${env.BUILD_NUMBER}.zip"
         
         figlet "Django Pipelines"
 
