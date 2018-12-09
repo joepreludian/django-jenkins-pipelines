@@ -65,12 +65,13 @@ def buildProject(args) {
                 figlet 'Django - Install dependencies'
 
                 echo "PROJECT NAME: ${args.python_django_wsgi} - MAIN MODULE: ${args.python_django_main_module}"
-                sh 'pip install --upgrade pipenv && pipenv install --system'
+                sh 'pip install --upgrade pipenv && pipenv install --system --deploy'
+                sh 'source .env'
             }
 
             stage('Run migrations') {
                 figlet 'Django - Run migrations'
-                sh 'pipenv run python manage.py migrate'
+                sh 'python manage.py migrate'
             }
 
             stage('Collect Static') {
