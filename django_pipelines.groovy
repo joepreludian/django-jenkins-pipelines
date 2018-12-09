@@ -35,73 +35,78 @@ def buildProject(args) {
     // @todo Add container linking for mysql and postgresql 
     // @todo Inject environment variables 
     
-    def environment_variables = args.get('project_environment_variables', [])
+  def environment_variables = args.get('project_environment_variables', [])
 
     withEnv(environment_variables) {
-    node {
-        cleanWs()
-        checkout scm
+      node {
+          cleanWs()
+          checkout scm
 
-        // Fetching the project version
-        project_version = sh returnStdout: true, script: 'cat VERSION || echo "latest"'
-        project_version = project_version.trim()
+          // Fetching the project version
+          project_version = sh returnStdout: true, script: 'cat VERSION || echo "latest"'
+          project_version = project_version.trim()
 
-        // Composition of the project Artifact
-        project_zip = "${args.project_name}-${project_version}-b${env.BUILD_NUMBER}.zip"
-        
-        figlet "Django Pipelines"
+          // Composition of the project Artifact
+          project_zip = "${args.project_name}-${project_version}-b${env.BUILD_NUMBER}.zip"
+          
+          figlet "Django Pipelines"
 
-        echo "Project ZIP name: ${project_zip}"
+          echo "Project ZIP name: ${project_zip}"
 
-        figlet "Django Pipelines - args"
-        
-        echo "- docker_extra_options: ${args.docker_extra_options}"
-        echo "- python_django_wsgi: ${args.python_django_wsgi}"
-        echo "- python_django_main_module: ${args.python_django_main_module}"
-        echo "- python_version: ${args.python_version}"
-        echo "- project_environment_variables: ${environment_variables}"
-        echo "-- Django Project version: ${project_version}"
+          figlet "Django Pipelines - args"
+          
+          echo "- docker_extra_options: ${args.docker_extra_options}"
+          echo "- python_django_wsgi: ${args.python_django_wsgi}"
+          echo "- python_django_main_module: ${args.python_django_main_module}"
+          echo "- python_version: ${args.python_version}"
+          echo "- project_environment_variables: ${environment_variables}"
+          echo "-- Django Project version: ${project_version}"
 
-        // Building the Django artifact
-        docker.image("python:${args.python_version}").inside(args.docker_extra_options) {
-            stage('Install dependencies') {
-                figlet "Project version ${project_version}"
-                figlet 'Django - Install dependencies'
+          docker.image("mysql:${args.mysql_sidecar.version}").withRun("-e \"MYSQL_ROOT_PASSWORD=${args.mysql_sidecar.root_password}\" -e \"MYSQL_DATABASE=${args.mysql_sidecar.database_name}\""') { db_container ->
 
-                echo "PROJECT NAME: ${args.python_django_wsgi} - MAIN MODULE: ${args.python_django_main_module}"
-                sh 'pip install --upgrade pipenv && pipenv install --system --deploy'
+            sh 'while ! mysqladmin ping -h0.0.0.0 --silent; do echo "Waiting mysql being ready" && sleep 1; done'
+
+            // Building the Django artifact
+            docker.image("python:${args.python_version}").inside("${args.docker_extra_options} --link ${db_container.id}:${args.mysql_sidecar.database_name}") {
+                stage('Install dependencies') {
+                    figlet "Project version ${project_version}"
+                    figlet 'Django - Install dependencies'
+
+                    echo "PROJECT NAME: ${args.python_django_wsgi} - MAIN MODULE: ${args.python_django_main_module}"
+                    sh 'pip install --upgrade pipenv && pipenv install --system --deploy'
+                }
+
+                stage('Run migrations') {
+                    figlet 'Django - Run migrations'
+                    sh 'python manage.py migrate'
+                }
+
+                stage('Collect Static') {
+                    figlet 'Django - Collect Static'
+
+                    sh 'pipenv run python manage.py collectstatic --noinput'
+                    stash includes: 'static/', name: 'django_static'
+                }
             }
-
-            stage('Run migrations') {
-                figlet 'Django - Run migrations'
-                sh 'python manage.py migrate'
-            }
-
-            stage('Collect Static') {
-                figlet 'Django - Collect Static'
-
-                sh 'pipenv run python manage.py collectstatic --noinput'
-                stash includes: 'static/', name: 'django_static'
-            }
-        }
-        
-        if (args.node_build_npm) {
-          stage('Build Node stuff') {
-              // Build Javascript stuff, if needed
-              if (args.node_build_npm) {
-                  docker.image("node").inside(args.docker_extra_options) {
-                      unstash 'django_static'
-
-                      sh 'npm install -g yarn'
-                      sh 'cd static; yarn'
-
-                      stash includes: 'static/', name: 'django_static_final'
-                  }
-              }
           }
-        }
+          
+          if (args.node_build_npm) {
+            stage('Build Node stuff') {
+                // Build Javascript stuff, if needed
+                if (args.node_build_npm) {
+                    docker.image("node").inside(args.docker_extra_options) {
+                        unstash 'django_static'
 
-    }
+                        sh 'npm install -g yarn'
+                        sh 'cd static; yarn'
+
+                        stash includes: 'static/', name: 'django_static_final'
+                    }
+                }
+            }
+          }
+
+      }
     }
 }
 
