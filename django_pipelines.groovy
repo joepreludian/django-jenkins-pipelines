@@ -35,6 +35,9 @@ def buildProject(args) {
     // @todo Add container linking for mysql and postgresql 
     // @todo Inject environment variables 
     
+    environment_variables = args.project_environment_variables ? args.project_environment_variables : []
+
+    withEnv(environment_variables) {
     node {
         cleanWs()
         checkout scm
@@ -98,6 +101,7 @@ def buildProject(args) {
           }
         }
 
+    }
     }
 }
 
