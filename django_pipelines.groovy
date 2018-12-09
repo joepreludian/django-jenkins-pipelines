@@ -62,7 +62,7 @@ def buildProject(args) {
           echo "- project_environment_variables: ${environment_variables}"
           echo "-- Django Project version: ${project_version}"
 
-          docker.image("mysql:${args.mysql_sidecar.version}").withRun("-e \"MYSQL_ROOT_PASSWORD=${args.mysql_sidecar.root_password}\" -e \"MYSQL_DATABASE=${args.mysql_sidecar.database_name}\""') { db_container ->
+          docker.image("mysql:${args.mysql_sidecar.version}").withRun("-e \"MYSQL_ROOT_PASSWORD=${args.mysql_sidecar.root_password}\" -e \"MYSQL_DATABASE=${args.mysql_sidecar.database_name}\"") { db_container ->
 
             sh 'while ! mysqladmin ping -h0.0.0.0 --silent; do echo "Waiting mysql being ready" && sleep 1; done'
 
