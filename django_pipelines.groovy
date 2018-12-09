@@ -59,6 +59,7 @@ def buildProject(args) {
         echo "- python_django_wsgi: ${args.python_django_wsgi}"
         echo "- python_django_main_module: ${args.python_django_main_module}"
         echo "- python_version: ${args.python_version}"
+        echo "- project_environment_variables: ${environment_variables}"
         echo "-- Django Project version: ${project_version}"
 
         // Building the Django artifact
@@ -69,7 +70,6 @@ def buildProject(args) {
 
                 echo "PROJECT NAME: ${args.python_django_wsgi} - MAIN MODULE: ${args.python_django_main_module}"
                 sh 'pip install --upgrade pipenv && pipenv install --system --deploy'
-                sh 'source .env'
             }
 
             stage('Run migrations') {
