@@ -65,7 +65,7 @@ def buildProject(args) {
                 figlet "Project version ${project_version}"
                 figlet 'Django - Install dependencies'
 
-                echo "PROJECT NAME: ${args.wsgi} - MAIN MODULE: ${args.main_module}"
+                echo "PROJECT NAME: ${args.python_django_wsgi} - MAIN MODULE: ${args.python_django_main_module}"
                 sh 'pip install --upgrade pipenv && pipenv install --system --deploy'
             }
 
