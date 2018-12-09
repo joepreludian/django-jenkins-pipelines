@@ -58,7 +58,7 @@ def buildProject(args) {
         echo "- python_version: ${args.python_version}"
         echo "-- Django Project version: ${project_version}"
 
-        if (args.project_environment) {
+        if (args.project_environment_variables) {
           env = args.project_environment_variables
         }
 
