@@ -58,10 +58,6 @@ def buildProject(args) {
         echo "- python_version: ${args.python_version}"
         echo "-- Django Project version: ${project_version}"
 
-        if (args.project_environment_variables) {
-          env = args.project_environment_variables
-        }
-
         // Building the Django artifact
         docker.image("python:${args.python_version}").inside(args.docker_extra_options) {
             stage('Install dependencies') {
@@ -69,18 +65,18 @@ def buildProject(args) {
                 figlet 'Django - Install dependencies'
 
                 echo "PROJECT NAME: ${args.python_django_wsgi} - MAIN MODULE: ${args.python_django_main_module}"
-                sh 'pip install --upgrade pipenv && pipenv install --system --deploy'
+                sh 'pip install --upgrade pipenv && pipenv install'
             }
 
             stage('Run migrations') {
                 figlet 'Django - Run migrations'
-                sh 'python manage.py migrate'
+                sh 'pipenv run python manage.py migrate'
             }
 
             stage('Collect Static') {
                 figlet 'Django - Collect Static'
 
-                sh 'python manage.py collectstatic --noinput'
+                sh 'pipenv run python manage.py collectstatic --noinput'
                 stash includes: 'static/', name: 'django_static'
             }
         }
