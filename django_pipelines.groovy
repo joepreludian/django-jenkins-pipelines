@@ -221,3 +221,5 @@ def runPipeline(params) {
     }
 }
 */
+
+return this
