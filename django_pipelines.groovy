@@ -60,7 +60,7 @@ def buildProject(args) {
 
 
         // Building the Django artifact
-        docker.image("python:${project_python_version}").inside(args.docker_extra_options) {
+        docker.image("python:${python_version}").inside(args.docker_extra_options) {
             stage('Install dependencies') {
                 figlet "Project version ${project_version}"
                 figlet 'Django - Install dependencies'
