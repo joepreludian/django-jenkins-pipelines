@@ -106,6 +106,8 @@ def buildProject(args) {
           }
           stage('Generate artifact') {
             cleanWs()
+            checkout scm
+            
             unstash 'django_static'
             
             zip zipFile: project_zip, dir: '.'
