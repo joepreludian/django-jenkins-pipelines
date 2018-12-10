@@ -74,7 +74,7 @@ def buildProject(args) {
                     figlet 'Django - Install dependencies'
 
                     echo "PROJECT NAME: ${args.python_django_wsgi} - MAIN MODULE: ${args.python_django_main_module}"
-                    sh 'pip install --upgrade pipenv && pipenv install --system --deploy'
+                    sh 'sudo apt-get update && apt-get install -y mariadb-devel && pip install --upgrade pipenv && pipenv install --system --deploy'
                 }
 
                 stage('Run migrations') {
