@@ -108,7 +108,7 @@ def buildProject(args) {
             cleanWs()
             unstash 'django_static'
             
-            zip zipFile: project_zip, dir: 'dist'
+            zip zipFile: project_zip, dir: '.'
             archiveArtifacts artifacts: project_zip, fingerprint: true
           }
   
