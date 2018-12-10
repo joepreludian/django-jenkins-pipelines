@@ -68,7 +68,7 @@ def buildProject(args) {
             //sh 'while ! mysqladmin ping -h0.0.0.0 --silent; do echo "Waiting mysql being ready" && sleep 1; done'
 
             // Building the Django artifact
-            docker.image("python:${args.python_version}").inside("${args.docker_extra_options} --link ${db_container.id}:${args.mysql_sidecar.database_name}") {
+            docker.image("python:${args.python_version}").inside("${args.docker_extra_options} --link ${db_container.id}:${args.mysql_sidecar.host_name}") {
                 stage('Install dependencies') {
                     figlet "Project version ${project_version}"
                     figlet 'Django - Install dependencies'
