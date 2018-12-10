@@ -85,7 +85,7 @@ def buildProject(args) {
                 stage('Collect Static') {
                     figlet 'Django - Collect Static'
 
-                    sh 'pipenv run python manage.py collectstatic --noinput'
+                    sh 'python manage.py collectstatic --noinput'
                     stash includes: 'static/', name: 'django_static'
                 }
             }
