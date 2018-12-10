@@ -93,20 +93,25 @@ def buildProject(args) {
           
           if (args.node_build_npm) {
             stage('Build Node stuff') {
-                // Build Javascript stuff, if needed
-                if (args.node_build_npm) {
-                    docker.image("node").inside(args.docker_extra_options) {
-                        unstash 'django_static'
+              // Build Javascript stuff, if needed
+              docker.image("node").inside(args.docker_extra_options) {
+                  unstash 'django_static'
 
-                        sh 'npm install -g yarn'
-                        sh 'cd static; yarn'
+                  sh 'npm install -g yarn'
+                  sh 'cd static; yarn'
 
-                        stash includes: 'static/', name: 'django_static_final'
-                    }
-                }
+                  stash includes: 'static/', name: 'django_static_final'
+              }
             }
           }
-
+          stage('Generate artifact') {
+            cleanWs()
+            unstash 'django_static'
+            
+            zip zipFile: project_zip, dir: 'dist'
+            archiveArtifacts artifacts: project_zip, fingerprint: true
+          }
+  
       }
     }
 }
