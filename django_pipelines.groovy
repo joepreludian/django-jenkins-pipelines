@@ -64,7 +64,8 @@ def buildProject(args) {
 
           docker.image("mysql:${args.mysql_sidecar.version}").withRun("-e \"MYSQL_ROOT_PASSWORD=${args.mysql_sidecar.root_password}\" -e \"MYSQL_DATABASE=${args.mysql_sidecar.database_name}\"") { db_container ->
 
-            sh 'while ! mysqladmin ping -h0.0.0.0 --silent; do echo "Waiting mysql being ready" && sleep 1; done'
+            sh 'echo "Waiting Mysql Being ready..." && sleep 10'
+            //sh 'while ! mysqladmin ping -h0.0.0.0 --silent; do echo "Waiting mysql being ready" && sleep 1; done'
 
             // Building the Django artifact
             docker.image("python:${args.python_version}").inside("${args.docker_extra_options} --link ${db_container.id}:${args.mysql_sidecar.database_name}") {
