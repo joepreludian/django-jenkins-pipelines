@@ -8,6 +8,7 @@ def buildProject(args) {
   project_version = null
   project_zip = null
   environment_variables = args.get('project_environment_variables', [])
+  docker_image_name_with_version = null
 
   withEnv(environment_variables) {
     node {
@@ -20,7 +21,8 @@ def buildProject(args) {
 
       // Composition of the project Artifact
       project_zip = "${args.project_name}-${project_version}-b${env.BUILD_NUMBER}.zip"
-      
+      docker_image_name_with_version = "${args.project_name}:${project_version}"
+
       figlet "Django Pipelines"
 
       echo "Project ZIP name: ${project_zip}"
@@ -34,6 +36,7 @@ def buildProject(args) {
       echo "- project_environment_variables: ${environment_variables}"
       echo "-- env.DJANGO_PIPELINES_JENKINS_HOME_VOL: ${env.DJANGO_PIPELINES_JENKINS_HOME_VOL}"
       echo "-- Django Project version: ${project_version}"
+      echo "-- Docker Image Name: ${docker_image_name_with_version}"
 
       docker.image("mysql:${args.mysql_sidecar.version}").withRun("-e \"MYSQL_ROOT_PASSWORD=${args.mysql_sidecar.root_password}\" -e \"MYSQL_DATABASE=${args.mysql_sidecar.database_name}\"") { db_container ->
 
@@ -71,8 +74,8 @@ def buildProject(args) {
         }
       }
       
-      if (args.node_build_npm) {
-        stage('Build Node stuff') {
+      if (args.node_install_yarn_static) {
+        stage('Node - yarn install on static') {
           // Build Javascript stuff, if needed
           docker.image("node").inside(args.docker_extra_options) {
               unstash 'django_static'
@@ -97,42 +100,52 @@ def buildProject(args) {
         stash includes: 'project.zip', name: 'django_project'
       }
       
-      stage('Install Docker Data') {
-        figlet 'DJ - Install Docker'
-        
-        cleanWs()
-        unstash 'django_project'
-        
-        sh 'wget https://github.com/joepreludian/django-jenkins-pipelines/archive/master.zip -O pipeline_temp.zip'
-        sh 'unzip pipeline_temp.zip -d .'
+      if (args.project_docker_inject) {
+        stage('Install Docker Data') {
+          figlet 'DJ - Install Docker'
+          
+          cleanWs()
+          unstash 'django_project'
+          
+          sh 'wget https://github.com/joepreludian/django-jenkins-pipelines/archive/master.zip -O pipeline_temp.zip'
+          sh 'unzip pipeline_temp.zip -d .'
 
-        sh "mkdir dist; cd dist; unzip ../project.zip -d .; cp -Rv ../django-jenkins-pipelines-master/django_jenkins_pipeline/* ."
-        
-        sh "cd dist; cat supervisord.conf"
-        sh "cd dist; sed -i \'s/%python_version%/${args.python_version}/g\' Dockerfile"
-        sh "cd dist; sed -i \'s/%project_name%/${args.python_django_wsgi}/g\' supervisord.conf"
+          sh "mkdir dist; cd dist; unzip ../project.zip -d .; cp -Rv ../django-jenkins-pipelines-master/django_jenkins_pipeline/* ."
+          
+          sh "cd dist; cat supervisord.conf"
+          sh "cd dist; sed -i \'s/%python_version%/${args.python_version}/g\' Dockerfile"
+          sh "cd dist; sed -i \'s/%project_name%/${args.python_django_wsgi}/g\' supervisord.conf"
 
-        zip zipFile: project_zip, dir: 'dist'
-        archiveArtifacts artifacts: project_zip, fingerprint: true
-        stash includes: project_zip, name: 'django_project_final'
+          zip zipFile: project_zip, dir: 'dist'
+          archiveArtifacts artifacts: project_zip, fingerprint: true
+          stash includes: project_zip, name: 'django_project_final'
+        }
       }
 
-      stage('Post exec') {
-        cleanWs()
+      if (args.project_docker_create_image) {
+        stage('Build Docker Image') {
+          figlet 'DJ - Build Docker Image'
+          sh "docker build -t ${docker_image_name_with_version} ."
+        }
+      }
+      
+      if (args.post_exec){
+        stage('Post Exec') {
+          cleanWs()
 
-        figlet 'DJ - Post Exec'
-        
-        unstash 'django_project_final'
-
-        if (!args.post_exec) {
-          echo 'No post_exec found, skipping'
-
-        } else {
-          echo '- post_exec found: executing function injecting variables'
-          echo "project_zip: ${project_zip}"
-          sh 'ls -lh'
+          figlet 'DJ - Post Exec'
           
-          args.post_exec(project_zip)
+          unstash 'django_project_final'
+
+          docker_image = args.project_docker_create_image ? docker_image_name_with_version : null
+
+          echo '- post_exec found: executing function injecting variables'
+          echo "- project_zip: ${project_zip}"
+          echo "- docker_image: ${docker_image}"
+          
+          sh 'ls -lh'
+
+          args.post_exec(project_zip, docker_image)
         }
       }
     }
