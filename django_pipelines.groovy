@@ -129,7 +129,12 @@ def buildProject(args) {
       if (args.project_docker_create_image) {
         stage('Build Docker Image') {
           figlet 'DJ - Build Docker Image'
-          sh "docker build -t ${docker_image_name_with_version} ."
+          cleanWs()
+
+          unstash 'django_project_final'
+          sh "mkdir dist && unzip ${project_zip} -d dist"
+
+          sh "docker build -t ${docker_image_name_with_version} dist/"
         }
       }
       
