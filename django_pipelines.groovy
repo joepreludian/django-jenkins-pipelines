@@ -91,10 +91,10 @@ def buildProject(args) {
         cleanWs()
         checkout scm
         
-        unstash 'django_static'
+        unstash 'django_static_final'
         
-        zip zipFile: 'project_zip', dir: '.'
-        stash includes: 'project_zip', name: 'django_project'
+        zip zipFile: 'project.zip', dir: '.'
+        stash includes: 'project.zip', name: 'django_project'
       }
       
       stage('Install Docker Data') {
