@@ -9,6 +9,7 @@ def buildProject(args) {
   project_zip = null
   environment_variables = args.get('project_environment_variables', [])
   docker_image_name_with_version = null
+  docker_extra_params = null
 
   withEnv(environment_variables) {
     node {
@@ -38,23 +39,22 @@ def buildProject(args) {
       echo "-- Django Project version: ${project_version}"
       echo "-- Docker Image Name: ${docker_image_name_with_version}"
 
+      def docker_config_jenkins_home_vol = args.docker_config_jenkins_home_vol ? args.docker_config_jenkins_home_vol : env.DJANGO_PIPELINES_JENKINS_HOME_VOL
+      if (!docker_config_jenkins_home_vol)
+        error "Jenkins configuration not found - please set docker_config_jenkins_home_vol or DJANGO_PIPELINES_JENKINS_HOME_VOL"
+
+      def docker_extra_options = args.docker_extra_options ? args.docker_extra_options : "-v ${docker_config_jenkins_home_vol}:/var/jenkins_home -u root:root"
+      docker_extra_params = "${docker_extra_options} --link ${db_container.id}:${args.mysql_sidecar.host_name}"
+      echo "-- docker_extra_params: ${docker_extra_params}"
+
       docker.image("mysql:${args.mysql_sidecar.version}").withRun("-e \"MYSQL_ROOT_PASSWORD=${args.mysql_sidecar.root_password}\" -e \"MYSQL_DATABASE=${args.mysql_sidecar.database_name}\"") { db_container ->
 
-        sh 'echo "Waiting Mysql Being ready..." && sleep 10'
-        //sh 'while ! mysqladmin ping -h0.0.0.0 --silent; do echo "Waiting mysql being ready" && sleep 1; done'
-
-        // Building the Django artifact
-        def docker_config_jenkins_home_vol = args.docker_config_jenkins_home_vol ? args.docker_config_jenkins_home_vol : env.DJANGO_PIPELINES_JENKINS_HOME_VOL
-        if (!docker_config_jenkins_home_vol)
-          error "Jenkins configuration not found - please set docker_config_jenkins_home_vol or DJANGO_PIPELINES_JENKINS_HOME_VOL"
-
-        def docker_extra_options = args.docker_extra_options ? args.docker_extra_options : "-v ${docker_config_jenkins_home_vol}:/var/jenkins_home -u root:root"
-        echo "- docker_extra_options: ${docker_extra_options}"
-
-        docker.image("python:${args.python_version}").inside("${docker_extra_options} --link ${db_container.id}:${args.mysql_sidecar.host_name}") {
+        sh 'echo "Waiting Mysql Being ready..." && sleep 4'
+        
+        docker.image("python:${args.python_version}").inside(docker_extra_params) {
             stage('Install dependencies') {
-                figlet "Project version ${project_version}"
-                figlet 'Django - Install dependencies'
+                figlet "${args.project_name} - ${project_version}"
+                figlet 'DJ - Install Dependencies'
 
                 echo "PROJECT NAME: ${args.python_django_wsgi} - MAIN MODULE: ${args.python_django_main_module}"
                 sh 'pip install --upgrade pipenv && pipenv install --system --deploy'
@@ -76,14 +76,13 @@ def buildProject(args) {
       
       if (args.node_install_yarn_static) {
         stage('Node - yarn install on static') {
-          // Build Javascript stuff, if needed
           docker.image("node").inside(args.docker_extra_options) {
               unstash 'django_static'
 
               sh 'npm install -g yarn'
               sh 'cd static; yarn'
 
-              stash includes: 'static/', name: 'django_static_final'
+              stash includes: 'static/', name: 'django_static_yarn'
           }
         }
       }
@@ -93,8 +92,12 @@ def buildProject(args) {
 
         cleanWs()
         checkout scm
-        
-        unstash 'django_static_final'
+       
+        if (node_install_yarn_static) {
+          unstash 'django_static_yarn'
+        } else {
+          unstash 'django_static'
+        }
         
         zip zipFile: 'project.zip', dir: '.'
         stash includes: 'project.zip', name: 'django_project'
