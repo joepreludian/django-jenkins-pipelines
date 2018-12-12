@@ -94,7 +94,7 @@ def buildProject(args) {
         cleanWs()
         checkout scm
        
-        if (node_yarn_install_static) {
+        if (args.node_yarn_install_static) {
           unstash 'django_static_yarn'
         } else {
           unstash 'django_static'
