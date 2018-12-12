@@ -4,22 +4,7 @@
 // https://plugins.jenkins.io/ws-cleanup
 
 def buildProject(args) {
-    
-    /*
-        Django Build Pipeline - A Simple Jenkins pipeline to build Django Projects
-        ---------------------
-        arguments: 
-            * docker_extra_options - string - Put extra options inside any projects
-            
-            * python_django_wsgi - string - required - Name of django wsgi container
-            * python_django_main_module - required - Name of django main module
 
-            * python_version - required - string [2.7|3.6]
-            * build_npm - required - boolean
-    */
-
-    // @todo Add container linking for mysql and postgresql 
-    // @todo Inject environment variables 
   project_version = null
   project_zip = null
   environment_variables = args.get('project_environment_variables', [])
@@ -57,7 +42,7 @@ def buildProject(args) {
 
         // Building the Django artifact
         def docker_config_jenkins_home_vol = args.docker_config_jenkins_home_vol ? args.docker_config_jenkins_home_vol : env.DJANGO_PIPELINES_JENKINS_HOME_VOL
-        if (docker_config_jenkins_home_vol)
+        if (!docker_config_jenkins_home_vol)
           error "Jenkins configuration not found - please set docker_config_jenkins_home_vol or DJANGO_PIPELINES_JENKINS_HOME_VOL"
 
         def docker_extra_options = args.docker_extra_options ? args.docker_extra_options : "-v ${args.docker_config_jenkins_home_vol}:/var/jenkins_home -u root:root"
@@ -132,6 +117,8 @@ def buildProject(args) {
       }
 
       stage('Post exec') {
+        cleanWs()
+
         figlet 'DJ - Post Exec'
         
         unstash 'django_project_final'
@@ -150,67 +137,5 @@ def buildProject(args) {
     }
   }
 }
-
-/*
-                   figlet 'Django - Generate artifact'
-                    stash includes: 'project.zip', name: 'django_project'
-                    
-                }
-            }
-
-            stage ('Create container') {
-                agent any
-                when {
-                    branch 'master'
-                }
-                steps {
-                    cleanWs()
-                    
-                    unstash 'django_project'
-                    
-                    echo 'Deployment container'
-                                        
-                    sh 'wget https://github.com/joepreludian/django-jenkins-pipelines/archive/master.zip -O pipeline_temp.zip'
-                    sh 'unzip pipeline_temp.zip -d .'
-
-                    sh "mkdir dist; cd dist; unzip ../project.zip -d .; cp -Rv ../django-jenkins-pipelines-master/django_jenkins_pipeline/* ."
-                    
-                    sh "cd dist; cat supervisord.conf"
-                    sh "cd dist; sed -i \'s/%python_version%/${project_python_version}/g\' Dockerfile"
-                    sh "cd dist; sed -i \'s/%project_name%/${wsgi_container}/g\' supervisord.conf"
-
-                    zip zipFile: project_zip, dir: 'dist'
-                    archiveArtifacts artifacts: project_zip, fingerprint: true
-
-                    sh "cd dist; docker build -t ${docker_image_name}:${project_version} -t ${docker_image_name}:latest ."  // @TODO Refactor docker image to test the latest 
-                }
-            }
-
-            stage('Deploy docker container') {
-                agent any
-                when {
-                    branch 'master'
-                }
-                steps {
-
-                    echo "Using Docker image: ${docker_image_name}:${project_version}"
-                    echo "Removing running instances"
-                
-                    // @TODO Refactor this to handle it efficiently
-
-                    params['buildClosure']()
-
-                    sh "docker stop ${project_name} || true"
-                    sh "docker rm ${project_name} || true"
-
-                    sh "docker run -it -d --name ${project_name} -p ${docker_listen_port}:80 ${docker_image_name}:${project_version}"
-
-                }
-            }
-
-        }
-    }
-}
-*/
 
 return this
