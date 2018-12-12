@@ -47,6 +47,7 @@ def buildProject(args) {
       echo "- python_django_main_module: ${args.python_django_main_module}"
       echo "- python_version: ${args.python_version}"
       echo "- project_environment_variables: ${environment_variables}"
+      echo "-- env.DJANGO_PIPELINES_JENKINS_HOME_VOL: ${env.DJANGO_PIPELINES_JENKINS_HOME_VOL}"
       echo "-- Django Project version: ${project_version}"
 
       docker.image("mysql:${args.mysql_sidecar.version}").withRun("-e \"MYSQL_ROOT_PASSWORD=${args.mysql_sidecar.root_password}\" -e \"MYSQL_DATABASE=${args.mysql_sidecar.database_name}\"") { db_container ->
