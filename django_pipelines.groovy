@@ -75,7 +75,7 @@ def buildProject(args) {
         }
       }
       
-      if (args.node_install_yarn_static) {
+      if (args.node_yarn_install_static) {
         stage('Node - yarn install on static') {
           docker.image("node").inside(args.docker_extra_options) {
               unstash 'django_static'
@@ -94,7 +94,7 @@ def buildProject(args) {
         cleanWs()
         checkout scm
        
-        if (node_install_yarn_static) {
+        if (node_yarn_install_static) {
           unstash 'django_static_yarn'
         } else {
           unstash 'django_static'
