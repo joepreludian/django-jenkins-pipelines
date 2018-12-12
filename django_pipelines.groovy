@@ -46,8 +46,9 @@ def buildProject(args) {
           error "Jenkins configuration not found - please set docker_config_jenkins_home_vol or DJANGO_PIPELINES_JENKINS_HOME_VOL"
 
         def docker_extra_options = args.docker_extra_options ? args.docker_extra_options : "-v ${args.docker_config_jenkins_home_vol}:/var/jenkins_home -u root:root"
+        echo "- docker_extra_options: ${docker_extra_options}"
 
-        docker.image("python:${args.python_version}").inside("$docker_extra_options} --link ${db_container.id}:${args.mysql_sidecar.host_name}") {
+        docker.image("python:${args.python_version}").inside("${docker_extra_options} --link ${db_container.id}:${args.mysql_sidecar.host_name}") {
             stage('Install dependencies') {
                 figlet "Project version ${project_version}"
                 figlet 'Django - Install dependencies'
