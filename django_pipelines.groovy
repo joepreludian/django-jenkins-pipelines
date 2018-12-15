@@ -22,7 +22,7 @@ def buildProject(args) {
       project_zip = "${args.project_name}-${project_version}-b${env.BUILD_NUMBER}.zip"
       docker_image_name_with_version = "${args.project_name}:${project_version}"
 
-      figlet "Preludian - Django Pipelines - v. ${pipeline_version}"
+      echo "Preludian - Django Pipelines - v. ${pipeline_version}"
 
       echo "Project ZIP name: ${project_zip}"
 
@@ -37,7 +37,7 @@ def buildProject(args) {
       echo "-- Django Project version: ${project_version}"
       echo "-- Docker Image Name: ${docker_image_name_with_version}"
 
-      def docker_config_jenkins_home_vol = args.docker_config_jenkins_home_vol ? args.docker_config_jenkins_home_vol : env.PIPELINES_JENKINS_HOME_VOL
+      def docker_config_jenkins_home_vol = args.docker_config_jenkins_home_vol ? args.docker_config_jenkins_home_vol : env.PRELUDIAN_PIPELINES_JENKINS_HOME_VOL
       if (!docker_config_jenkins_home_vol)
         error "Jenkins configuration not found - please set docker_config_jenkins_home_vol or DJANGO_PIPELINES_JENKINS_HOME_VOL"
 
