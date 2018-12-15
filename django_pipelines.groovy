@@ -1,14 +1,13 @@
 #!groovy
 
 def buildProject(args) {
+  pipeline_version = '1.0.0'
 
   project_version = null
   project_zip = null
   environment_variables = args.get('project_environment_variables', [])
   docker_image_name_with_version = null
   docker_extra_params = null
-
-  pipeline_version = new File('VERSION').text
 
   withEnv(environment_variables) {
     node {
