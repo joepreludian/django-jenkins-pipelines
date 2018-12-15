@@ -8,6 +8,8 @@ def buildProject(args) {
   docker_image_name_with_version = null
   docker_extra_params = null
 
+  pipeline_version = new File('VERSION').text
+
   withEnv(environment_variables) {
     node {
       cleanWs()
@@ -21,7 +23,7 @@ def buildProject(args) {
       project_zip = "${args.project_name}-${project_version}-b${env.BUILD_NUMBER}.zip"
       docker_image_name_with_version = "${args.project_name}:${project_version}"
 
-      figlet "Django Pipelines"
+      figlet "Preludian - Django Pipelines - v. ${pipeline_version}"
 
       echo "Project ZIP name: ${project_zip}"
 
