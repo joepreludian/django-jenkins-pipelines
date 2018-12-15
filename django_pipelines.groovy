@@ -1,8 +1,5 @@
 #!groovy
 
-// https://plugins.jenkins.io/pipeline-utility-steps
-// https://plugins.jenkins.io/ws-cleanup
-
 def buildProject(args) {
 
   project_version = null
@@ -39,7 +36,7 @@ def buildProject(args) {
       echo "-- Django Project version: ${project_version}"
       echo "-- Docker Image Name: ${docker_image_name_with_version}"
 
-      def docker_config_jenkins_home_vol = args.docker_config_jenkins_home_vol ? args.docker_config_jenkins_home_vol : env.DJANGO_PIPELINES_JENKINS_HOME_VOL
+      def docker_config_jenkins_home_vol = args.docker_config_jenkins_home_vol ? args.docker_config_jenkins_home_vol : env.PIPELINES_JENKINS_HOME_VOL
       if (!docker_config_jenkins_home_vol)
         error "Jenkins configuration not found - please set docker_config_jenkins_home_vol or DJANGO_PIPELINES_JENKINS_HOME_VOL"
 
