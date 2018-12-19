@@ -1,5 +1,11 @@
 #!groovy
 
+properties([
+  parameters([
+    string(name: 'ARTIFACT_NAME', defaultValue: 'TESTING', description: 'The target environment', )
+   ])
+])
+
 def buildProject(args) {
   pipeline_version = '1.0.0'
 
