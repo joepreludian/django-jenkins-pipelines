@@ -11,8 +11,8 @@ println(getRC)
 if(getRC.equals(200)) {
     json_stuff = slurper.parseText(get.getText())
 
-    json_stuff.each { item ->
-        list_available_names.push(item['name'])
+    json_stuff.each {
+        list_available_names.push(it.name)
     }
 }
 
