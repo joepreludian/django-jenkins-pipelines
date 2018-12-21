@@ -9,10 +9,10 @@ def getRC = artifact_list.getResponseCode()
 println(getRC)
 
 if(getRC.equals(200)) {
-    json_stuff = slurper.parseText(get.getText())
+    json_stuff = slurper.parseText(artifact_list.getInputStream().getText())
 
-    json_stuff.each {
-        list_available_names.push(it.name)
+    json_stuff.each { item ->
+        list_available_names.push(item.name)
     }
 }
 
