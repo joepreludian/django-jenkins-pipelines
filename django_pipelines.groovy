@@ -1,8 +1,25 @@
 #!groovy
 
+def artifact_list = new URL("https://gist.githubusercontent.com/joepreludian/7029ad9238b858a59930bea33e65d623/raw/053b588260822f88381c3f7c4cab885e5d40982f/example.json").openConnection()
+
+def slurper = new groovy.json.JsonSlurper()
+def list_available_names = []
+
+def getRC = artifact_list.getResponseCode()
+println(getRC)
+
+if(getRC.equals(200)) {
+    json_stuff = slurper.parseText(get.getInputStream().getText())
+
+    json_stuff.each { item ->
+        list_available_names.push(item['name'])
+    }
+}
+
+
 properties([
   parameters([
-    string(name: 'ARTIFACT_NAME', defaultValue: 'TESTING', description: 'The target environment', )
+    string(name: 'ARTIFACT_NAME', choices: list_available_names, description: 'List got from an app', )
    ])
 ])
 
