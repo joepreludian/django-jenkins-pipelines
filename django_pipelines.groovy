@@ -1,6 +1,7 @@
 #!groovy
 
-pipeline_version = '1.1.0'
+pipeline_version = '1.1.1'
+pipeline_abort_flag = false
 
 properties([
   parameters([
@@ -9,7 +10,19 @@ properties([
 ])
 
 def buildProject(args) {
+  try {
+    buildProjectPipeline(args)
+  } catch (e) {
+    if (pipeline_abort_flag) {
+      currentBuild.result = 'SUCCESS'
+      return
+    }
+    
+    throw e
+  }
+}
 
+def buildProjectPipeline(args) {
   project_version = null
   project_zip = null
   environment_variables = args.get('project_environment_variables', [])
@@ -18,7 +31,9 @@ def buildProject(args) {
 
   if (env.ENABLE_PIPELINE == false) {
     figlet 'Reloading Pipeline'
-    return
+    
+    pipeline_abort_flag = true
+    error('Only Reloading Pipeline')
   }
 
   // Pipeline Start
@@ -52,7 +67,7 @@ def buildProject(args) {
 
       def docker_config_jenkins_home_vol = args.docker_config_jenkins_home_vol ? args.docker_config_jenkins_home_vol : env.JENKINS_HOME_VOLUME
       if (!docker_config_jenkins_home_vol)
-        error "Jenkins configuration not found - please set docker_config_jenkins_home_vol or DJANGO_PIPELINES_JENKINS_HOME_VOL"
+        error "Jenkins configuration not found - please set docker_config_jenkins_home_vol or the environment variable JENKINS_HOME_VOLUME"
 
         
       docker.image("mysql:${args.mysql_sidecar.version}").withRun("-e \"MYSQL_ROOT_PASSWORD=${args.mysql_sidecar.root_password}\" -e \"MYSQL_DATABASE=${args.mysql_sidecar.database_name}\"") { db_container ->
