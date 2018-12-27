@@ -1,30 +1,14 @@
 #!groovy
 
-def artifact_list = new URL("https://gist.githubusercontent.com/joepreludian/7029ad9238b858a59930bea33e65d623/raw/053b588260822f88381c3f7c4cab885e5d40982f/example.json").openConnection()
-
-def slurper = new groovy.json.JsonSlurper()
-def list_available_names = []
-
-def getRC = artifact_list.getResponseCode()
-println(getRC)
-
-if(getRC.equals(200)) {
-    json_stuff = slurper.parseText(artifact_list.getInputStream().getText())
-
-    json_stuff.each { item ->
-        list_available_names.push(item.name)
-    }
-}
-
+pipeline_version = '1.1.0'
 
 properties([
   parameters([
-    string(name: 'ARTIFACT_NAME', choices: list_available_names, description: 'List got from an app', )
+    booleanParam(name: 'ENABLE_PIPELINE', defaultValue: false, description: "PRELUDIAN Django Pipeline (${pipeline_version}) - True for Enable; False for only update the Pipeline"),
    ])
 ])
 
 def buildProject(args) {
-  pipeline_version = '1.0.0'
 
   project_version = null
   project_zip = null
@@ -32,6 +16,12 @@ def buildProject(args) {
   docker_image_name_with_version = null
   docker_extra_params = null
 
+  if (env.ENABLE_PIPELINE == false) {
+    figlet 'Reloading Pipeline'
+    return
+  }
+
+  // Pipeline Start
   withEnv(environment_variables) {
     node {
       cleanWs()
@@ -60,7 +50,7 @@ def buildProject(args) {
       echo "-- Django Project version: ${project_version}"
       echo "-- Docker Image Name: ${docker_image_name_with_version}"
 
-      def docker_config_jenkins_home_vol = args.docker_config_jenkins_home_vol ? args.docker_config_jenkins_home_vol : env.PRELUDIAN_PIPELINES_JENKINS_HOME_VOL
+      def docker_config_jenkins_home_vol = args.docker_config_jenkins_home_vol ? args.docker_config_jenkins_home_vol : env.JENKINS_HOME_VOLUME
       if (!docker_config_jenkins_home_vol)
         error "Jenkins configuration not found - please set docker_config_jenkins_home_vol or DJANGO_PIPELINES_JENKINS_HOME_VOL"
 
