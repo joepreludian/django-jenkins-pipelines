@@ -1,6 +1,6 @@
 #!groovy
 
-pipeline_version = '1.1.3'
+pipeline_version = '1.2.0'
 pipeline_abort_flag = false
 
 properties([
@@ -8,6 +8,16 @@ properties([
     booleanParam(name: 'ENABLE_PIPELINE', defaultValue: true, description: "PRELUDIAN Django Pipeline (${pipeline_version}) - True for Enable; False for only update the Pipeline"),
    ])
 ])
+
+def is_release_branch(include_master_as_release_branch) {
+  branch_name = env.BRANCH_NAME
+
+  if (branch_name == 'master' && include_master_as_release_branch) {
+    return true
+  }
+
+  return branch_name =~ /(release\/.*/
+}
 
 def buildProject(args) {
   try {
@@ -28,6 +38,9 @@ def buildProjectPipeline(args) {
   environment_variables = args.get('project_environment_variables', [])
   docker_image_name_with_version = null
   docker_extra_params = null
+  master_as_release_branch = args.get('master_as_release_branch', false)
+
+  dry_run_mode = true
 
   if (params.ENABLE_PIPELINE == false) {
     figlet 'Reloading Pipeline'
@@ -61,7 +74,16 @@ def buildProjectPipeline(args) {
       echo "- python_django_main_module: ${args.python_django_main_module}"
       echo "- python_version: ${args.python_version}"
       echo "- project_environment_variables: ${environment_variables}"
-      echo "-- env.DJANGO_PIPELINES_JENKINS_HOME_VOL: ${env.DJANGO_PIPELINES_JENKINS_HOME_VOL}"
+      echo "- Branch master will be treated as a release branch? ${master_as_release_branch}"
+
+      if (is_release_branch(master_as_release_branch)) {
+        echo "- Pipeline running in RELEASE MODE";
+        dry_run_mode = false
+      } else {
+        echo "- Pipeline Running in Dry Run mode"
+      }
+
+      echo "-- env.JENKINS_HOME_VOLUME: ${env.JENKINS_HOME_VOLUME}"
       echo "-- Django Project version: ${project_version}"
       echo "-- Docker Image Name: ${docker_image_name_with_version}"
 
@@ -144,7 +166,7 @@ def buildProjectPipeline(args) {
           
           sh "cd dist; cat supervisord.conf"
           sh "cd dist; sed -i \'s/%python_version%/${args.python_version}/g\' Dockerfile"
-          sh "cd dist; sed -i \'s/%project_name%/${args.python_django_wsgi}/g\' supervisord.conf"
+          sh "cd dist; sed -i \'s/%project_name%/${args.python_django_main_module}/g\' supervisord.conf"
 
           zip zipFile: project_zip, dir: 'dist'
           archiveArtifacts artifacts: project_zip, fingerprint: true
@@ -164,7 +186,7 @@ def buildProjectPipeline(args) {
         }
       }
       
-      if (args.post_exec){
+      if (args.post_exec && dry_run_mode == false) {
         stage('Post Exec') {
           cleanWs()
 
@@ -182,6 +204,13 @@ def buildProjectPipeline(args) {
 
           args.post_exec(project_zip, docker_image)
         }
+      }
+
+      stage('Cleanup') {
+        figlet 'DJ - Cleanup'
+        
+        echo 'Cleaning up generated containers'
+        sh "docker rmi ${docker_image_name_with_version} || true"
       }
     }
   }
