@@ -1,11 +1,11 @@
 #!groovy
 
-pipeline_version = '1.1.2'
+pipeline_version = '1.1.3'
 pipeline_abort_flag = false
 
 properties([
   parameters([
-    booleanParam(name: 'ENABLE_PIPELINE', defaultValue: false, description: "PRELUDIAN Django Pipeline (${pipeline_version}) - True for Enable; False for only update the Pipeline"),
+    booleanParam(name: 'ENABLE_PIPELINE', defaultValue: true, description: "PRELUDIAN Django Pipeline (${pipeline_version}) - True for Enable; False for only update the Pipeline"),
    ])
 ])
 
