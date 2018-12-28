@@ -16,7 +16,7 @@ def is_release_branch(include_master_as_release_branch) {
     return true
   }
 
-  return branch_name =~ /(release\/.*/
+  return branch_name =~ /(release\/.*)/
 }
 
 def buildProject(args) {
