@@ -1,6 +1,6 @@
 #!groovy
 
-pipeline_version = '1.1.1'
+pipeline_version = '1.1.2'
 pipeline_abort_flag = false
 
 properties([
@@ -29,7 +29,7 @@ def buildProjectPipeline(args) {
   docker_image_name_with_version = null
   docker_extra_params = null
 
-  if (env.ENABLE_PIPELINE == false) {
+  if (params.ENABLE_PIPELINE == false) {
     figlet 'Reloading Pipeline'
     
     pipeline_abort_flag = true
