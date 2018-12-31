@@ -1,6 +1,6 @@
 #!groovy
 
-pipeline_version = '1.3.0'
+pipeline_version = '1.3.1'
 pipeline_abort_flag = false
 
 properties([
@@ -91,14 +91,15 @@ def buildProjectPipeline(args) {
       if (!docker_config_jenkins_home_vol)
         error "Jenkins configuration not found - please set docker_config_jenkins_home_vol or the environment variable JENKINS_HOME_VOLUME"
 
-        
+      docker_extra_options = args.docker_extra_options ? args.docker_extra_options : "-v ${docker_config_jenkins_home_vol}:/var/jenkins_home -u root:root"
+      docker_extra_params = "${docker_extra_options} --link ${db_container.id}:${args.mysql_sidecar.host_name}"
+
+      
       docker.image("mysql:${args.mysql_sidecar.version}").withRun("-e \"MYSQL_ROOT_PASSWORD=${args.mysql_sidecar.root_password}\" -e \"MYSQL_DATABASE=${args.mysql_sidecar.database_name}\"") { db_container ->
         
         sh 'echo "Waiting Mysql Being ready..." && sleep 4'
         
-        def docker_extra_options = args.docker_extra_options ? args.docker_extra_options : "-v ${docker_config_jenkins_home_vol}:/var/jenkins_home -u root:root"
-        docker_extra_params = "${docker_extra_options} --link ${db_container.id}:${args.mysql_sidecar.host_name}"
-        echo "-- docker_extra_params: ${docker_extra_params}"
+                echo "-- docker_extra_params: ${docker_extra_params}"
 
         docker.image("python:${args.python_version}").inside(docker_extra_params) {
             stage('Install dependencies') {
@@ -125,7 +126,7 @@ def buildProjectPipeline(args) {
       
       if (args.node_yarn_install_static) {
         stage('Node - yarn install on static') {
-          docker.image("node").inside(args.docker_extra_options) {
+          docker.image("node").inside(docker_extra_options) {
               unstash 'django_static'
 
               sh 'npm install -g yarn'
