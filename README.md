@@ -1,4 +1,4 @@
-# Django Jenkins Pipeline
+# Preludian Django Jenkins Pipeline
 
 A dockerized pipeline for build Django applications into Docker-in-docker Jenkins trying to use best development practices;
 In a nutshell Django Jenkins pipelines aims to turn the Django web framework, a well consolidated web framework, even more productive, automating their deployment processes into a straightforward, clean build and deployment.
