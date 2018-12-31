@@ -1,6 +1,6 @@
 #!groovy
 
-pipeline_version = '1.2.0'
+pipeline_version = '1.3.0'
 pipeline_abort_flag = false
 
 properties([
